@@ -25,25 +25,25 @@ SERVER_1_PASSWORD=server_1_password
 Добавьте переменные для других серверов по аналогии
 
 В файле bot.js необходимо добавить новые сервера:
-                { host: process.env.SERVER_1_HOST, username: process.env.SERVER_1_USERNAME, password: process.env.SERVER_1_PASSWORD },
+                 // { host: process.env.SERVER_1_HOST, username: process.env.SERVER_1_USERNAME, password: process.env.SERVER_1_PASSWORD },
 
                 Добавьте другие серверы по аналогии
 
 # Запуск бота
 Выполните следующую команду:
 
-// npm start
+npm start
 
 # Настройка хостов
 
 # Включите WinRM на хостах
 Убедитесь, что на всех целевых серверах включен WinRM. Для этого выполните следующую команду в PowerShell с правами администратора:
 
-// winrm quickconfig
+winrm quickconfig
 
 # Настройте правила брандмауэра
 Убедитесь, что брандмауэр на серверах разрешает подключения по протоколу WinRM. Для этого выполните следующую команду в PowerShell с правами администратора:
 
-// winrm set winrm/config/service/Auth '@{Basic="true"}'
+winrm set winrm/config/service/Auth '@{Basic="true"}'
 
-// winrm set winrm/config/service '@{AllowUnencrypted="true"}'
+winrm set winrm/config/service '@{AllowUnencrypted="true"}'
