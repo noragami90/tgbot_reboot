@@ -25,9 +25,10 @@ SERVER_1_PASSWORD=server_1_password
 Добавьте переменные для других серверов по аналогии
 
 В файле bot.js необходимо добавить новые сервера:
-                 // { host: process.env.SERVER_1_HOST, username: process.env.SERVER_1_USERNAME, password: process.env.SERVER_1_PASSWORD },
 
-                Добавьте другие серверы по аналогии
+{ host: process.env.SERVER_1_HOST, username: process.env.SERVER_1_USERNAME, password: process.env.SERVER_1_PASSWORD },
+
+//Добавьте другие серверы по аналогии
 
 # Запуск бота
 Выполните следующую команду:
