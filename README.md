@@ -14,13 +14,13 @@ npm install
 # Настройте переменные окружения
 Создайте файл .env в корне проекта и укажите в нем следующие переменные окружения:
 
-{ TELEGRAM_TOKEN=your_telegram_bot_token
+TELEGRAM_TOKEN=your_telegram_bot_token
 
 SERVER_1_HOST=server_1_ip
 
 SERVER_1_USERNAME=server_1_username
 
-SERVER_1_PASSWORD=server_1_password }
+SERVER_1_PASSWORD=server_1_password
 
 Добавьте переменные для других серверов по аналогии
 
