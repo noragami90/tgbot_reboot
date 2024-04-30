@@ -1,0 +1,17 @@
+# Папка с зависимостями node.js
+node_modules/
+
+# Файлы настройки окружения
+.env
+
+# Локальные файлы конфигурации
+config.json
+
+# Логи и временные файлы
+logs/
+temp/
+
+# Кэш npm
+npm-debug.log
+ .gitignore
+ .idea
