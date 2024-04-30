@@ -10,8 +10,8 @@ config.json
 # Логи и временные файлы
 logs/
 temp/
+.gitignore
+.idea
 
 # Кэш npm
 npm-debug.log
- .gitignore
- .idea
