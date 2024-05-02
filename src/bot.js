@@ -1,6 +1,6 @@
 const TelegramBot = require('node-telegram-bot-api');
 const dotenv = require('dotenv');
-const winrm = require('nodejs-winrm');
+const { exec } = require('child_process');
 
 dotenv.config();
 
@@ -46,27 +46,21 @@ bot.on('message', (msg) => {
 
 bot.on('callback_query', async (query) => {
     const chatId = query.message.chat.id;
-    const messageId = query.message.message_id;
     console.log(`Пользователь ${chatId} выбрал: ${query.data}`);
 
     if (query.data === 'confirm') {
-        try {
-            const servers = [
-                { host: process.env.SERVER_1_HOST, username: process.env.SERVER_1_USERNAME, password: process.env.SERVER_1_PASSWORD },
-                // Добавьте другие серверы по аналогии
-            ];
+        const servers = [
+            { host: process.env.SERVER_1_HOST, username: process.env.SERVER_1_USERNAME, password: process.env.SERVER_1_PASSWORD },
+            // Добавьте другие серверы по аналогии
+        ];
 
-            for (const server of servers) {
-                console.log(`Начинаю процесс перезагрузки сервера: ${server.host}`);
-                await rebootServer(server, chatId);
-            }
-
-            console.log("Все серверы успешно перезагружены.");
-            bot.sendMessage(chatId, 'Перезагрузка всех серверов завершена', createMainMenu());
-        } catch (error) {
-            console.error('Ошибка при перезагрузке сервера:', error);
-            bot.sendMessage(chatId, `Ошибка при перезагрузке серверов: ${error.message}`, createMainMenu());
+        for (const server of servers) {
+            console.log(`Начинаю процесс перезагрузки сервера: ${server.host}`);
+            await rebootServer(server, chatId);
         }
+
+        console.log("Все серверы успешно перезагружены.");
+        bot.sendMessage(chatId, 'Перезагрузка всех серверов завершена', createMainMenu());
     } else if (query.data === 'cancel') {
         bot.deleteMessage(chatId, messageId);
         console.log(`Перезагрузка отменена пользователем ${chatId}.`);
@@ -75,10 +69,9 @@ bot.on('callback_query', async (query) => {
 });
 
 async function rebootServer(server, chatId) {
-    const scriptPath = process.env.PS_SCRIPT_PATH; // Убедитесь, что этот путь верно указан в .env файле
-    const command = `pwsh -File "${scriptPath}" -ComputerName "${server.host}" -Username "${server.username}" -Password "${server.password}"`;
-
     try {
+        const command = `python3 reboot_server.py "${server.host}" "${server.username}" "${server.password}"`;
+
         exec(command, (error, stdout, stderr) => {
             if (error) {
                 console.error(`Ошибка при перезагрузке сервера ${server.host}:`, error);
