@@ -7,6 +7,8 @@ dotenv.config();
 const token = process.env.TELEGRAM_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 
+console.log("Бот запущен и начинает обработку сообщений...");
+
 function createConfirmationKeyboard() {
     return {
         reply_markup: {
@@ -30,11 +32,13 @@ function createMainMenu() {
 
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
+    console.log(`Пользователь с ID ${chatId} запустил бота.`);
     bot.sendMessage(chatId, 'Выберите действие:', createMainMenu());
 });
 
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
+    console.log(`Получено сообщение от пользователя ${chatId}: ${msg.text}`);
     if (msg.text === "Перезагрузка серверов") {
         bot.sendMessage(chatId, 'Вы уверены, что хотите перезагрузить сервера?', createConfirmationKeyboard());
     }
@@ -43,6 +47,7 @@ bot.on('message', (msg) => {
 bot.on('callback_query', async (query) => {
     const chatId = query.message.chat.id;
     const messageId = query.message.message_id;
+    console.log(`Пользователь ${chatId} выбрал: ${query.data}`);
 
     if (query.data === 'confirm') {
         try {
@@ -52,41 +57,40 @@ bot.on('callback_query', async (query) => {
             ];
 
             for (const server of servers) {
+                console.log(`Начинаю процесс перезагрузки сервера: ${server.host}`);
                 await rebootServer(server, chatId);
             }
 
+            console.log("Все серверы успешно перезагружены.");
             bot.sendMessage(chatId, 'Перезагрузка всех серверов завершена', createMainMenu());
         } catch (error) {
             console.error('Ошибка при перезагрузке сервера:', error);
+            bot.sendMessage(chatId, `Ошибка при перезагрузке серверов: ${error.message}`, createMainMenu());
         }
     } else if (query.data === 'cancel') {
         bot.deleteMessage(chatId, messageId);
+        console.log(`Перезагрузка отменена пользователем ${chatId}.`);
         bot.sendMessage(chatId, 'Перезагрузка серверов отменена', createMainMenu());
     }
 });
 
 async function rebootServer(server, chatId) {
+    const scriptPath = process.env.PS_SCRIPT_PATH; // Убедитесь, что этот путь верно указан в .env файле
+    const command = `pwsh -File "${scriptPath}" -ComputerName "${server.host}" -Username "${server.username}" -Password "${server.password}"`;
+
     try {
-        const auth = 'Basic ' + Buffer.from(`${server.username}:${server.password}`).toString('base64');
-        const params = {
-            host: server.host,
-            port: 5985,
-            path: '/wsman',
-            auth: auth
-        };
-
-        params['shellId'] = await winrm.shell.doCreateShell(params);
-        params['command'] = 'shutdown /r /t 0';
-        params['commandId'] = await winrm.command.doExecuteCommand(params);
-        const result = await winrm.command.doReceiveOutput(params);
-
-        await winrm.shell.doDeleteShell(params);
-
-        bot.sendMessage(chatId, `Сервер ${server.host} успешно перезагружается.`);
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Ошибка при перезагрузке сервера ${server.host}:`, error);
+                bot.sendMessage(chatId, `Ошибка при перезагрузке сервера ${server.host}: ${error.message}`);
+                return;
+            }
+            console.log(`Сервер ${server.host} успешно перезагружается.`);
+            bot.sendMessage(chatId, `Сервер ${server.host} успешно перезагружается.`);
+        });
     } catch (error) {
-        bot.sendMessage(chatId, `Ошибка при перезагрузке сервера ${server.host}: ${error.message}`);
-        console.error(`Ошибка при перезагрузке сервера ${server.host}:`, error);
-        throw error;
+        console.error(`Неустранимая ошибка: ${error}`);
+        bot.sendMessage(chatId, `Критическая ошибка при выполнении скрипта: ${error.message}`);
     }
 }
 
