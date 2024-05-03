@@ -1,7 +1,7 @@
 # Инструкция по запуску бота для перезагрузки серверов.
 Этот бот предоставляет возможность перезагружать удаленные серверы с помощью Telegram. 
 
-Для работы бота требуются учетные данные для доступа к хостам по протоколу WinRM.
+Для работы бота требуются учетные данные для доступа к хостам по протоколу SSH.
 
 # Установка и настройка
 
@@ -14,13 +14,13 @@ npm install
 # Настройте переменные окружения
 Создайте файл .env в корне проекта и укажите в нем следующие переменные окружения:
 
-TELEGRAM_TOKEN=your_telegram_bot_token
+TELEGRAM_TOKEN=Токен для Telegram бота
 
-SERVER_1_HOST=server_1_ip
+SERVER_1_HOST=
 
-SERVER_1_USERNAME=server_1_username
+SERVER_1_USERNAME='домен\пользователь'
 
-SERVER_1_PASSWORD=server_1_password
+SERVER_1_PASSWORD=''
 
 Добавьте переменные для других серверов по аналогии
 
@@ -37,14 +37,6 @@ npm start
 
 # Настройка хостов
 
-# Включите WinRM на хостах
-Убедитесь, что на всех целевых серверах включен WinRM. Для этого выполните следующую команду в PowerShell с правами администратора:
+# Установите на сервер OpenSSH Server 
 
-winrm quickconfig
-
-# Настройте правила брандмауэра
-Убедитесь, что брандмауэр на серверах разрешает подключения по протоколу WinRM. Для этого выполните следующую команду в PowerShell с правами администратора:
-
-winrm set winrm/config/service/Auth '@{Basic="true"}'
-
-winrm set winrm/config/service '@{AllowUnencrypted="true"}'
+https://github.com/PowerShell/Win32-OpenSSH/releases/download/v9.5.0.0p1-Beta/OpenSSH-Win64-v9.5.0.0.msi
