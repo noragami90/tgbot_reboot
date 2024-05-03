@@ -14,8 +14,7 @@ npm install
 # Настройте переменные окружения
 Создайте файл .env в корне проекта и укажите в нем следующие переменные окружения:
 
-Токен для Telegram бота
-TELEGRAM_TOKEN=
+TELEGRAM_TOKEN=Токен для Telegram бота
 
 SERVER_1_HOST=
 
