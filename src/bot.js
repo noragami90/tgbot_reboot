@@ -1,6 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const dotenv = require('dotenv');
-const { exec } = require('child_process');
+const { NodeSSH } = require('node-ssh');
+const { Client } = require('ssh2');
 
 dotenv.config();
 
@@ -46,11 +47,13 @@ bot.on('message', (msg) => {
 
 bot.on('callback_query', async (query) => {
     const chatId = query.message.chat.id;
+    const messageId = query.message.message_id;
     console.log(`Пользователь ${chatId} выбрал: ${query.data}`);
 
     if (query.data === 'confirm') {
         const servers = [
             { host: process.env.SERVER_1_HOST, username: process.env.SERVER_1_USERNAME, password: process.env.SERVER_1_PASSWORD },
+            { host: process.env.SERVER_2_HOST, username: process.env.SERVER_2_USERNAME, password: process.env.SERVER_2_PASSWORD },
             // Добавьте другие серверы по аналогии
         ];
 
@@ -60,7 +63,7 @@ bot.on('callback_query', async (query) => {
         }
 
         console.log("Все серверы успешно перезагружены.");
-        bot.sendMessage(chatId, 'Перезагрузка всех серверов завершена', createMainMenu());
+        bot.sendMessage(chatId, 'Перезагрузка всех серверов', createMainMenu());
     } else if (query.data === 'cancel') {
         bot.deleteMessage(chatId, messageId);
         console.log(`Перезагрузка отменена пользователем ${chatId}.`);
@@ -69,22 +72,38 @@ bot.on('callback_query', async (query) => {
 });
 
 async function rebootServer(server, chatId) {
-    try {
-        const command = `python3 reboot_server.py "${server.host}" "${server.username}" "${server.password}"`;
-
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Ошибка при перезагрузке сервера ${server.host}:`, error);
-                bot.sendMessage(chatId, `Ошибка при перезагрузке сервера ${server.host}: ${error.message}`);
+    const conn = new Client();
+    conn.on('ready', () => {
+        console.log('SSH Client Ready');
+        conn.exec('shutdown /r /t 30', (err, stream) => {
+            if (err) {
+                console.error('Ошибка выполнения команды:', err);
+                bot.sendMessage(chatId, `Ошибка при отправке команды перезагрузки на сервер ${server.host}: ${err.message}`);
                 return;
             }
-            console.log(`Сервер ${server.host} успешно перезагружается.`);
-            bot.sendMessage(chatId, `Сервер ${server.host} успешно перезагружается.`);
+            stream.on('close', () => {
+                console.log(`Команда перезагрузки отправлена на сервер ${server.host}.`);
+                bot.sendMessage(chatId, `Сервер ${server.host} будет перезагружен через 30 секунд.`);
+                conn.end(); // Закрываем соединение после отправки команды
+            }).on('data', (data) => {
+                console.log('STDOUT:', data.toString());
+            }).stderr.on('data', (data) => {
+                console.log('STDERR:', data.toString());
+            });
         });
-    } catch (error) {
-        console.error(`Неустранимая ошибка: ${error}`);
-        bot.sendMessage(chatId, `Критическая ошибка при выполнении скрипта: ${error.message}`);
-    }
+    }).on('error', (err) => {
+        console.log('Ошибка SSH соединения:', err);
+        if (err.code === 'ECONNRESET') {
+            bot.sendMessage(chatId, `Соединение с сервером ${server.host} было сброшено, перезагрузка запланирована.`);
+        } else {
+            bot.sendMessage(chatId, `Ошибка соединения с сервером ${server.host}: ${err.message}`);
+        }
+    }).connect({
+        host: server.host,
+        port: 22,
+        username: server.username,
+        password: server.password
+    });
 }
 
 bot.on('polling_error', (error) => {
